@@ -137,11 +137,12 @@ void LumiFile::readTextFile(istream &file)
 			}
 			continue;
 		}
-		if (raw.size() == 0 && line[0]=='t')
+		if (raw.size() == 0 && (line[0]=='t' || line[0]=='T'))
 		{
 			istringstream ss(line);
 			string s;
-			while (ss >> s) sampleName.push_back(QString(s.c_str()));
+			//while (ss >> s) sampleName.push_back(QString(s.c_str()));
+			while (getline(ss, s, '\t')) sampleName.push_back(QString(s.c_str()));
 			continue;
 		}
 		istringstream ss(line);
