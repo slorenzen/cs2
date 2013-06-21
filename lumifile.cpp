@@ -6,7 +6,6 @@
 #include <vector>
 #include <iostream>
 
-
 #pragma GCC diagnostic ignored "-Weffc++"
 #pragma GCC diagnostic ignored "-Wconversion"
 #include <QDateTime>
@@ -112,15 +111,15 @@ void LumiFile::readTextFile(istream &file)
 	vector<QString> sampleName, comment;
 	while (getline(file, line, '\n'))
 	{
+		if (line.length()==1) continue;
 		if (line.compare(0, 1, "#")==0) 
 		{
-			cerr << "Comment line " << line << endl;
 			if (line.compare(0, 7, "#SAMPLE")==0)
 			{
 				stringstream ss(line);
 				getline(ss, buf, '\t'); // SAMPLE
 				getline(ss, buf, '\t');
-				int nr = atoi(buf.c_str()); cerr << "number " << nr << endl;
+				int nr = atoi(buf.c_str()); 
 				getline(ss, buf, '\t');
 				if (sampleName.size()<nr+1) sampleName.resize(nr+1);
 				sampleName[nr] = buf.c_str();
@@ -130,7 +129,7 @@ void LumiFile::readTextFile(istream &file)
 				stringstream ss(line);
 				getline(ss, buf, '\t'); // COMMENT
 				getline(ss, buf, '\t');
-				int nr = atoi(buf.c_str()); cerr << "number " << nr << endl;
+				int nr = atoi(buf.c_str()); 
 				getline(ss, buf, '\t');
 				if (comment.size()<nr+1) comment.resize(nr+1);
 				comment[nr] = buf.c_str();
@@ -157,11 +156,8 @@ void LumiFile::readTextFile(istream &file)
 		return;
 	}
 	size_t nTimes = raw[0].size();
-	//cerr << "nTimes is " << nTimes << endl;
 	for (unsigned int row = 0; row < raw.size(); row++) 
 	{
-		//cerr << "row " << row << ": " << raw[row].size() << endl;
-		//for (int i = 0; i < raw[row].size(); i++) cerr << i << "\t" << raw[row][i] << endl;
 		if (raw[row].size() != nTimes) {_error.append(new LumiError(QString("Wrong data count in line %1").arg(row+1))); return;}
 	}
 	QVector<double> t;
