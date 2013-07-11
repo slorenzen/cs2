@@ -16,8 +16,8 @@
 #include <QGroupBox>
 #pragma GCC diagnostic pop
 
-#include <stdint.h>
-#include <algorithm>
+//#include <stdint.h>
+//#include <algorithm>
 #include <qwt/qwt_plot_curve.h>
 #include "scaledraw24.h"
 
@@ -576,13 +576,11 @@ void cs2::exportExcel()
 		for (QModelIndexList::const_iterator it = mil.begin(); it < mil.end(); it++)
 		{
 			TimeSeries *ts = tsList->ts(*it);
-			out << "    <Cell><Data ss:Type=\"Number\">";
 			if (tNr >= ts->skipSmoothBegin() && tNr < ts->nRaw()-ts->skipSmoothEnd())
 			{
-				out << ts->dSmooth(tNr-ts->skipSmoothBegin());
+				out << "    <Cell><Data ss:Type=\"Number\">" << ts->dSmooth(tNr-ts->skipSmoothBegin()) << "</Data></Cell>" << endl;
 			}
-			else out << "NaN";
-			out  << "</Data></Cell>" << endl;
+			else out << "<Cell><Data ss:Type=\"Error\">#N/A</Data></Cell>" << endl;
 		}
 		out << "  </Row>" << endl;
 	}
@@ -591,7 +589,6 @@ void cs2::exportExcel()
 	//
 	// TREND
 	//
-	cerr << "WRITE TREND" << endl;
 	out << " <Worksheet ss:Name=\"Trend\">" << endl;
 	out << "  <Table ss:ExpandedColumnCount=\"" << mil.length()+1 << "\" ss:ExpandedRowCount=\"" << tsRef->nRaw()+1 << "\" x:FullColumns=\"1\" x:FullRows=\"1\">" << endl;
 	out << "  <Row>" << endl;
@@ -605,13 +602,11 @@ void cs2::exportExcel()
 		for (QModelIndexList::const_iterator it = mil.begin(); it < mil.end(); it++)
 		{
 			TimeSeries *ts = tsList->ts(*it);
-			out << "    <Cell><Data ss:Type=\"Number\">";
 			if (tNr >= ts->skipTrendBegin() && tNr < ts->nRaw()-ts->skipTrendEnd())
 			{
-				out << ts->dTrend(tNr-ts->skipTrendBegin());
+				out << "    <Cell><Data ss:Type=\"Number\">" << ts->dTrend(tNr-ts->skipTrendBegin()) << "</Data></Cell>" << endl;
 			}
-			else out << "NaN";
-			out  << "</Data></Cell>" << endl;
+			else out << "<Cell><Data ss:Type=\"Error\">#N/A</Data></Cell>" << endl;
 		}
 		out << "  </Row>" << endl;
 	}
@@ -620,7 +615,6 @@ void cs2::exportExcel()
 	//
 	// DETRENDED
 	//
-	cerr << "WRITE DET" << endl;
 	out << " <Worksheet ss:Name=\"Detrended\">" << endl;
 	out << "  <Table ss:ExpandedColumnCount=\"" << mil.length()+1 << "\" ss:ExpandedRowCount=\"" << tsRef->nRaw()+1 << "\" x:FullColumns=\"1\" x:FullRows=\"1\">" << endl;
 	out << "  <Row>" << endl;
@@ -634,13 +628,11 @@ void cs2::exportExcel()
 		for (QModelIndexList::const_iterator it = mil.begin(); it < mil.end(); it++)
 		{
 			TimeSeries *ts = tsList->ts(*it);
-			out << "    <Cell><Data ss:Type=\"Number\">";
 			if (tNr >= ts->skipTrendBegin() && tNr < ts->nRaw()-ts->skipTrendEnd())
 			{
-				out << ts->dDetrended(tNr-ts->skipTrendBegin());
+				out << "    <Cell><Data ss:Type=\"Number\">" << ts->dDetrended(tNr-ts->skipTrendBegin()) << "</Data></Cell>" << endl;
 			}
-			else out << "NaN";
-			out  << "</Data></Cell>" << endl;
+			else out << "<Cell><Data ss:Type=\"Error\">#N/A</Data></Cell>" << endl;
 		}
 		out << "  </Row>" << endl;
 	}
@@ -649,7 +641,6 @@ void cs2::exportExcel()
 	//
 	// FIT
 	//
-	cerr << "WRITE FIT" << endl;
 	out << " <Worksheet ss:Name=\"Fit\">" << endl;
 	out << "  <Table ss:ExpandedColumnCount=\"" << TimeSeries::TextFileFormat.size() << "\" ss:ExpandedRowCount=\"" << mil.length()+1 << "\" x:FullColumns=\"1\" x:FullRows=\"1\">" << endl;
 	out << "  <Row>" << endl;
@@ -665,12 +656,48 @@ void cs2::exportExcel()
 		out << "  <Row>" << endl;
 		for (QList<TimeSeries::Data>::const_iterator itDat = TimeSeries::TextFileFormat.begin(); itDat < TimeSeries::TextFileFormat.end(); itDat++)
 		{
-			out << "    <Cell><Data ss:Type=\"String\">" << ts->data(*itDat).toString() << "</Data></Cell>" << endl;
+			switch (TimeSeries::type(*itDat))
+			{
+				case (TimeSeries::T_STRING) : 
+				{
+					out << "    <Cell><Data ss:Type=\"String\">" << ts->data(*itDat).toString() << "</Data></Cell>" << endl; 
+					break;
+				}
+				case (TimeSeries::T_DOUBLE) : 
+				{
+					if (std::isnan(ts->data(*itDat).toDouble())) out << "    <Cell><Data ss:Type=\"Error\">#N/A</Data></Cell>" << endl;
+					else out << "    <Cell><Data ss:Type=\"Number\">" << ts->data(*itDat).toDouble() << "</Data></Cell>" << endl;
+					break;
+				}
+				case (TimeSeries::T_INT) : 
+				{
+					if (isnan(ts->data(*itDat).toInt())) out << "    <Cell><Data ss:Type=\"Error\">#N/A</Data></Cell>" << endl;
+					else out << "    <Cell><Data ss:Type=\"Number\">" << ts->data(*itDat).toInt() << "</Data></Cell>" << endl;
+					break;
+				}
+				case (TimeSeries::T_BOOL) :
+				{
+					out << "    <Cell><Data ss:Type=\"String\">" << (ts->data(*itDat).toBool()?'T':'F') << "</Data></Cell>" << endl; 
+					break;
+				}
+				case (TimeSeries::T_TRENDMETHOD) :
+				{
+					out << "    <Cell><Data ss:Type=\"String\">" << TimeSeries::name(ts->trendMethod()) << "</Data></Cell>" << endl; 
+					break;
+				}
+				case (TimeSeries::T_TRENDSTEPS) :
+				{
+					out << "    <Cell><Data ss:Type=\"String\">" << TimeSeries::name(ts->trendSteps()) << "</Data></Cell>" << endl; 
+					break;
+				}
+				case (TimeSeries::T_ABSREL) :
+				{
+					out << "    <Cell><Data ss:Type=\"String\">" << TimeSeries::name(ts->absRel()) << "</Data></Cell>" << endl; 
+					break;
+				}
+				default:{}
+			}
 		}
-// 		for (int dNr = 0; dNr < TimeSeries::nData; dNr++) 
-// 		{
-// 			out << "    <Cell><Data ss:Type=\"String\">" << ts->data(static_cast<TimeSeries::Data>(dNr)).toString() << "</Data></Cell>" << endl;
-// 		}
 		out << "  </Row>" << endl;
 	}
 	out << "  </Table>" << endl;
