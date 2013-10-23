@@ -111,7 +111,7 @@ void LumiFile::readTextFile(istream &file)
 	vector<QString> sampleName, comment;
 	while (getline(file, line, '\n'))
 	{
-		if (line.length()==1) continue;
+		if (line.length()<2) continue;
 		if (line.compare(0, 1, "#")==0) 
 		{
 			if (line.compare(0, 7, "#SAMPLE")==0)
@@ -119,7 +119,7 @@ void LumiFile::readTextFile(istream &file)
 				stringstream ss(line);
 				getline(ss, buf, '\t'); // SAMPLE
 				getline(ss, buf, '\t');
-				int nr = atoi(buf.c_str()); 
+				const unsigned int nr = atoi(buf.c_str()); 
 				getline(ss, buf, '\t');
 				if (sampleName.size()<nr+1) sampleName.resize(nr+1);
 				sampleName[nr] = buf.c_str();
@@ -129,7 +129,7 @@ void LumiFile::readTextFile(istream &file)
 				stringstream ss(line);
 				getline(ss, buf, '\t'); // COMMENT
 				getline(ss, buf, '\t');
-				int nr = atoi(buf.c_str()); 
+				const unsigned int nr = atoi(buf.c_str()); 
 				getline(ss, buf, '\t');
 				if (comment.size()<nr+1) comment.resize(nr+1);
 				comment[nr] = buf.c_str();
@@ -164,7 +164,7 @@ void LumiFile::readTextFile(istream &file)
 	for (unsigned int row = 0; row < raw.size(); row++) t.push_back(raw[row][0]);
 	sampleName.resize(nTimes);
 	comment.resize(nTimes);
-	for (int i = 0; i < nTimes; i++) if (sampleName[i]=="") sampleName[i] = QString("%1").arg(i);
+	for (unsigned int i = 0; i < nTimes; i++) if (sampleName[i]=="") sampleName[i] = QString("%1").arg(i);
 	if (sampleName.size() > 0)
 	{
 		if (sampleName.size() != nTimes) {_error.append(new LumiError(QString("Header row count %1 does not match data count %2").arg(sampleName.size()).arg(nTimes))); return;}
